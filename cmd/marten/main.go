@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	"github.com/spf13/cobra"
@@ -24,7 +25,7 @@ func main() {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			port, err := strconv.ParseUint(args[0], 10, 16)
 			if err != nil {
-				return fmt.Errorf("invalid port %q", args[0])
+				return fmt.Errorf("invalid port %v", args[0])
 			}
 
 			return client.RunTCPTunnel(uint16(port))
@@ -32,6 +33,6 @@ func main() {
 	})
 
 	if err := rootCmd.Execute(); err != nil {
-		panic(err)
+		os.Exit(1)
 	}
 }

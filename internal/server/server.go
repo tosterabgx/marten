@@ -2,42 +2,47 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
+	"log/slog"
 	"net"
 
 	"github.com/tosterabgx/marten/internal/protocol"
 )
 
 func handleNewClient(conn net.Conn, clientHello protocol.ClientHello) {
-	fmt.Println("Got ClientHello:", clientHello)
+	slog.Debug("got ClientHello", "message", clientHello)
 
-	actualPort, _ := registerListener(clientHello.DesiredPort, conn) // TODO: handle error
-
+	actualPort, err := registerListener(conn)
+	if err != nil {
+		slog.Error("listener registry failed", "error", err)
+		return
+	}
 	serverHello := protocol.ServerHello{ActualPort: actualPort}
 
 	enc := json.NewEncoder(conn)
 	if err := enc.Encode(serverHello); err != nil {
-		fmt.Println("Error encoding ServerHello:", err)
+		slog.Warn("ServerHello encoding failed", "error", err)
 		conn.Close()
 		return
 	}
 
-	fmt.Printf("Sent ServerHello: %v\n", serverHello)
+	slog.Debug("sent ServerHello", "message", serverHello)
 }
 
 func handleAcceptConnection(tunnelConn net.Conn, acceptConnection protocol.AcceptConnection) {
-	fmt.Println("Got AcceptConnection:", acceptConnection)
-	uuid := acceptConnection.UUID
+	slog.Debug("got AcceptConnection", "message", acceptConnection)
 
+	uuid := acceptConnection.UUID
 	connsMu.RLock()
-	outboundConn, ok := outboundConnections[uuid]
+	externalConn, ok := externalConns[uuid]
 	connsMu.RUnlock()
 	if !ok {
-		fmt.Println("No outbound connection found for", uuid)
+		slog.Warn("no external connection found", "UUID", uuid)
 		return
 	}
 
-	protocol.Proxy(tunnelConn, outboundConn)
+	slog.Debug("start proxy")
+
+	protocol.Proxy(tunnelConn, externalConn)
 }
 
 func handleConnection(conn net.Conn) {
@@ -45,48 +50,48 @@ func handleConnection(conn net.Conn) {
 
 	var raw map[string]json.RawMessage
 	if err := dec.Decode(&raw); err != nil {
-		fmt.Println("Incorrect message:", err)
+		slog.Warn("incorrect message", "error", err)
+		conn.Close()
 		return
 	}
 
 	if data, ok := raw["ClientHello"]; ok {
 		var clientHello protocol.ClientHello
 		if err := json.Unmarshal(data, &clientHello.DesiredPort); err != nil {
-			fmt.Println("Incorrect ClientHello:", err)
+			slog.Warn("incorrect ClientHello", "error", err)
 			conn.Close()
 			return
 		}
 
 		handleNewClient(conn, clientHello)
-		return
-	}
-
-	if data, ok := raw["AcceptConnection"]; ok {
+	} else if data, ok := raw["AcceptConnection"]; ok {
 		var acceptConnection protocol.AcceptConnection
 		if err := json.Unmarshal(data, &acceptConnection.UUID); err != nil {
-			fmt.Println("Incorrect AcceptConnection:", err)
+			slog.Warn("incorrect AcceptConnection", "error", err)
 			conn.Close()
 			return
 		}
 
 		handleAcceptConnection(conn, acceptConnection)
-		return
+	} else {
+		slog.Warn("unknown message", "message", raw)
 	}
-
-	fmt.Println("Unknown message:", raw)
 }
 
 func RunControlServer() error {
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", protocol.ControlPort))
+	addr := protocol.JoinAddr("", protocol.ControlPort)
+	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}
 	defer l.Close()
 
+	slog.Info("listening control", "address", addr)
+
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error:", err)
+			slog.Error("error accepting", "error", err)
 			continue
 		}
 

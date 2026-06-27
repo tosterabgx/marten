@@ -2,7 +2,9 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"sync"
 
@@ -13,9 +15,9 @@ import (
 var portsMu sync.RWMutex
 var occupiedPorts = make(map[uint16]struct{})
 var connsMu sync.RWMutex
-var outboundConnections = make(map[uuid.UUID]net.Conn)
+var externalConns = make(map[uuid.UUID]net.Conn)
 
-func getAvailablePort(desiredPort uint16) (uint16, error) {
+func getAvailablePort() (uint16, error) {
 	for i := protocol.MinPort; i < protocol.MaxPort; i++ {
 		portsMu.RLock()
 		_, ok := occupiedPorts[i]
@@ -25,13 +27,17 @@ func getAvailablePort(desiredPort uint16) (uint16, error) {
 		}
 	}
 
-	return 0, nil
+	return 0, errors.New("no available port")
 }
 
-func registerListener(desiredPort uint16, controlConn net.Conn) (uint16, error) {
-	port, _ := getAvailablePort(desiredPort)
+func registerListener(controlConn net.Conn) (uint16, error) {
+	port, err := getAvailablePort()
+	if err != nil {
+		return 0, err
+	}
 
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	addr := protocol.JoinAddr("", port)
+	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		return 0, err
 	}
@@ -45,29 +51,11 @@ func registerListener(desiredPort uint16, controlConn net.Conn) (uint16, error) 
 	return port, nil
 }
 
-func handleTunnelConnection(conn net.Conn, controlConn net.Conn) {
-	uuid := uuid.New()
-
-	connsMu.Lock()
-	outboundConnections[uuid] = conn
-	connsMu.Unlock()
-
-	newConnectinonRequest := protocol.NewConnection{UUID: uuid}
-	enc := json.NewEncoder(controlConn)
-	if err := enc.Encode(newConnectinonRequest); err != nil {
-		fmt.Println("Error encoding NewConnection:", err)
-		conn.Close()
-		return
-	}
-
-	fmt.Println("Sent NewConnection:", newConnectinonRequest)
-}
-
 func handleListener(l net.Listener, controlConn net.Conn) {
 	defer l.Close()
 	defer controlConn.Close()
 
-	fmt.Println("Start listening")
+	slog.Info("listening external", "address", l.Addr().String())
 
 	for {
 		conn, err := l.Accept()
@@ -76,8 +64,26 @@ func handleListener(l net.Listener, controlConn net.Conn) {
 			continue
 		}
 
-		fmt.Println("Got a connection")
-
-		go handleTunnelConnection(conn, controlConn)
+		go handleExternalConnection(conn, controlConn)
 	}
+}
+
+func handleExternalConnection(conn net.Conn, controlConn net.Conn) {
+	slog.Debug("got new external connection")
+
+	uuid := uuid.New()
+
+	connsMu.Lock()
+	externalConns[uuid] = conn
+	connsMu.Unlock()
+
+	newConnectionRequest := protocol.NewConnection{UUID: uuid}
+	enc := json.NewEncoder(controlConn)
+	if err := enc.Encode(newConnectionRequest); err != nil {
+		slog.Warn("NewConnection encoding failed", "error", err)
+		conn.Close()
+		return
+	}
+
+	slog.Debug("sent NewConnection", "message", newConnectionRequest)
 }

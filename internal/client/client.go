@@ -4,65 +4,80 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"strconv"
 
 	"github.com/tosterabgx/marten/internal/protocol"
 )
 
-func RunTCPTunnel(port uint16) error {
-	conn, err := net.Dial("tcp", net.JoinHostPort(protocol.DefaultServerAddr, strconv.Itoa(int(protocol.ControlPort))))
+var controlAddr = protocol.JoinAddr(protocol.DefaultServerAddr, protocol.ControlPort)
+
+func performHandshake(enc *json.Encoder, dec *json.Decoder) (uint16, error) {
+	var clientHello = protocol.ClientHello{DesiredPort: 0}
+	var serverHello protocol.ServerHello
+
+	if err := enc.Encode(clientHello); err != nil {
+		return 0, err
+	}
+
+	if err := dec.Decode(&serverHello); err != nil {
+		return 0, err
+	}
+
+	return serverHello.ActualPort, nil
+}
+
+func performConnectionAccept(dec *json.Decoder) (net.Conn, error) {
+	newConnection := protocol.NewConnection{}
+	if err := dec.Decode(&newConnection); err != nil {
+		return nil, err
+	}
+
+	tunnelConn, err := net.Dial("tcp", controlAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	acceptConnection := protocol.AcceptConnection{UUID: newConnection.UUID}
+
+	tunnelEnc := json.NewEncoder(tunnelConn)
+	if err := tunnelEnc.Encode(acceptConnection); err != nil {
+		return nil, err
+	}
+
+	return tunnelConn, nil
+}
+
+func RunTCPTunnel(localPort uint16) error {
+	controlConn, err := net.Dial("tcp", controlAddr)
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer controlConn.Close()
 
-	var clientHello = protocol.ClientHello{DesiredPort: port}
-	var serverHello protocol.ServerHello
+	enc := json.NewEncoder(controlConn)
+	dec := json.NewDecoder(controlConn)
 
-	enc := json.NewEncoder(conn)
-	if err := enc.Encode(clientHello); err != nil {
+	actualPort, err := performHandshake(enc, dec)
+	if err != nil {
 		return err
 	}
 
-	fmt.Printf("Sent ClientHello: %v\n", clientHello)
-
-	dec := json.NewDecoder(conn)
-	if err := dec.Decode(&serverHello); err != nil {
-		return err
-	}
-
-	fmt.Printf("Got ServerHello: %v\n", serverHello)
+	localAddr := protocol.JoinAddr("localhost", localPort)
+	actualAddr := protocol.JoinAddr(protocol.DefaultServerAddr, actualPort)
+	fmt.Printf("Tunnel set:\n  %v -> %v\n", localAddr, actualAddr)
 
 	for {
-		var newConnection = protocol.NewConnection{}
-		if err := dec.Decode(&newConnection); err != nil {
-			return err
-		}
-
-		fmt.Printf("Got NewConnection: %v\n", newConnection)
-
-		conn2, err := net.Dial("tcp", net.JoinHostPort(protocol.DefaultServerAddr, strconv.Itoa(int(protocol.ControlPort))))
+		tunnelConn, err := performConnectionAccept(dec)
 		if err != nil {
-			return err
+			fmt.Printf("Error creating tunnel: %v\n", err)
+			continue
 		}
 
-		enc2 := json.NewEncoder(conn2)
-
-		var acceptConnection = protocol.AcceptConnection{UUID: newConnection.UUID}
-		if err := enc2.Encode(acceptConnection); err != nil {
-			return err
-		}
-
-		fmt.Printf("Sent AcceptConnection: %v\n", acceptConnection)
-
-		localConn, err := net.Dial("tcp", "localhost:8080")
+		localConn, err := net.Dial("tcp", localAddr)
 		if err != nil {
-			return fmt.Errorf("ERROR")
+			fmt.Printf("Error connecting to %v: %v\n", localAddr, err)
+			continue
 		}
 
-		protocol.Proxy(conn2, localConn)
-
-		fmt.Println("Connection ended")
+		go protocol.Proxy(tunnelConn, localConn)
 	}
-	return nil
 }

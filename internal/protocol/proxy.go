@@ -17,6 +17,7 @@ func Proxy(connA, connB net.Conn) {
 	}()
 	go func() {
 		io.Copy(connA, connB)
+		done <- struct{}{}
 	}()
 
 	<-done
