@@ -34,7 +34,7 @@ func handleConnection(conn net.Conn) {
 }
 
 func RunTCPServer() error {
-	l, err := net.Listen("tcp", fmt.Sprintf("::%d", protocol.ControlPort))
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", protocol.ControlPort))
 	if err != nil {
 		return err
 	}
