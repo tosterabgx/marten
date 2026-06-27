@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net"
 	"sync"
@@ -30,42 +29,55 @@ func getAvailablePort() (uint16, error) {
 	return 0, errors.New("no available port")
 }
 
-func registerListener(controlConn net.Conn) (uint16, error) {
+func registerListener(controlConn net.Conn) (net.Listener, uint16, error) {
 	port, err := getAvailablePort()
 	if err != nil {
-		return 0, err
+		return nil, 0, err
 	}
 
 	addr := protocol.JoinAddr("", port)
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
-		return 0, err
+		return nil, 0, err
 	}
 
 	portsMu.Lock()
 	occupiedPorts[port] = struct{}{}
 	portsMu.Unlock()
 
-	go handleListener(l, controlConn)
+	go handleListener(l, controlConn, port)
 
-	return port, nil
+	return l, port, nil
 }
 
-func handleListener(l net.Listener, controlConn net.Conn) {
-	defer l.Close()
-	defer controlConn.Close()
+func handleListener(l net.Listener, controlConn net.Conn, port uint16) {
+	defer cleanupListener(l, port)
 
 	slog.Info("listening external", "address", l.Addr().String())
 
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error:", err)
+			if errors.Is(err, net.ErrClosed) {
+				return
+			}
+
+			slog.Warn("accept failed", "error", err)
 			continue
 		}
 
 		go handleExternalConnection(conn, controlConn)
 	}
+}
+
+func cleanupListener(l net.Listener, port uint16) {
+	l.Close()
+
+	portsMu.Lock()
+	delete(occupiedPorts, port)
+	portsMu.Unlock()
+
+	slog.Debug("listener cleaned up", "port", port)
 }
 
 func handleExternalConnection(conn net.Conn, controlConn net.Conn) {

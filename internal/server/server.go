@@ -2,33 +2,33 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"log/slog"
 	"net"
 
 	"github.com/tosterabgx/marten/internal/protocol"
 )
 
-func handleNewClient(conn net.Conn, clientHello protocol.ClientHello) {
+func handleNewClient(conn net.Conn, clientHello protocol.ClientHello) (net.Listener, error) {
 	slog.Debug("got ClientHello", "message", clientHello)
 
-	actualPort, err := registerListener(conn)
+	l, actualPort, err := registerListener(conn)
 	if err != nil {
-		slog.Error("listener registry failed", "error", err)
-		return
+		return nil, fmt.Errorf("listener registry failed: %v", err)
 	}
 	serverHello := protocol.ServerHello{ActualPort: actualPort}
 
 	enc := json.NewEncoder(conn)
 	if err := enc.Encode(serverHello); err != nil {
-		slog.Warn("ServerHello encoding failed", "error", err)
-		conn.Close()
-		return
+		return nil, fmt.Errorf("ServerHello encoding failed: %v", err)
 	}
 
 	slog.Debug("sent ServerHello", "message", serverHello)
+	return l, nil
 }
 
-func handleAcceptConnection(tunnelConn net.Conn, acceptConnection protocol.AcceptConnection) {
+func handleAcceptConnection(tunnelConn net.Conn, acceptConnection protocol.AcceptConnection) error {
 	slog.Debug("got AcceptConnection", "message", acceptConnection)
 
 	uuid := acceptConnection.UUID
@@ -36,8 +36,7 @@ func handleAcceptConnection(tunnelConn net.Conn, acceptConnection protocol.Accep
 	externalConn, ok := externalConns[uuid]
 	connsMu.RUnlock()
 	if !ok {
-		slog.Warn("no external connection found", "UUID", uuid)
-		return
+		return fmt.Errorf("no external connection found with uuid=%v", uuid)
 	}
 
 	slog.Debug("start proxy")
@@ -46,6 +45,7 @@ func handleAcceptConnection(tunnelConn net.Conn, acceptConnection protocol.Accep
 	connsMu.Lock()
 	delete(externalConns, uuid)
 	connsMu.Unlock()
+	return nil
 }
 
 func handleConnection(conn net.Conn) {
@@ -66,7 +66,14 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		handleNewClient(conn, clientHello)
+		l, err := handleNewClient(conn, clientHello)
+		if err != nil {
+			slog.Warn("failed to handle ClientHello", "error", err)
+			conn.Close()
+		}
+
+		io.Copy(io.Discard, conn)
+		l.Close()
 	} else if data, ok := raw["AcceptConnection"]; ok {
 		var acceptConnection protocol.AcceptConnection
 		if err := json.Unmarshal(data, &acceptConnection.UUID); err != nil {
@@ -75,7 +82,11 @@ func handleConnection(conn net.Conn) {
 			return
 		}
 
-		handleAcceptConnection(conn, acceptConnection)
+		err := handleAcceptConnection(conn, acceptConnection)
+		if err != nil {
+			slog.Warn("failed to handle AcceptConnection", "error", err)
+			conn.Close()
+		}
 	} else {
 		slog.Warn("unknown message", "message", raw)
 	}
