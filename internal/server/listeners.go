@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"math/rand"
 	"net"
 	"sync"
 
@@ -17,16 +18,23 @@ var connsMu sync.RWMutex
 var externalConns = make(map[uuid.UUID]net.Conn)
 
 func getAvailablePort() (uint16, error) {
-	for i := protocol.MinPort; i < protocol.MaxPort; i++ {
+	const maxAttempts = 150
+
+	rangeSize := int(protocol.MaxPort) - int(protocol.MinPort)
+
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		port := protocol.MinPort + uint16(rand.Intn(rangeSize))
+
 		portsMu.RLock()
-		_, ok := occupiedPorts[i]
+		_, ok := occupiedPorts[port]
 		portsMu.RUnlock()
+
 		if !ok {
-			return i, nil
+			return port, nil
 		}
 	}
 
-	return 0, errors.New("no available port")
+	return 0, errors.New("no available port after 150 attempts")
 }
 
 func registerListener(controlConn net.Conn) (net.Listener, uint16, error) {
