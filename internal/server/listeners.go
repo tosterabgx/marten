@@ -25,9 +25,12 @@ func getAvailablePort() (uint16, error) {
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		port := protocol.MinPort + uint16(rand.Intn(rangeSize))
 
-		portsMu.RLock()
+		portsMu.Lock()
 		_, ok := occupiedPorts[port]
-		portsMu.RUnlock()
+		if !ok {
+			occupiedPorts[port] = struct{}{}
+		}
+		portsMu.Unlock()
 
 		if !ok {
 			return port, nil
@@ -48,10 +51,6 @@ func registerListener(controlConn net.Conn) (net.Listener, uint16, error) {
 	if err != nil {
 		return nil, 0, err
 	}
-
-	portsMu.Lock()
-	occupiedPorts[port] = struct{}{}
-	portsMu.Unlock()
 
 	go handleListener(l, controlConn, port)
 
@@ -101,6 +100,11 @@ func handleExternalConnection(conn net.Conn, controlConn net.Conn) {
 	enc := json.NewEncoder(controlConn)
 	if err := enc.Encode(newConnectionRequest); err != nil {
 		slog.Warn("NewConnection encoding failed", "error", err)
+
+		connsMu.Lock()
+		delete(externalConns, uuid)
+		connsMu.Unlock()
+
 		conn.Close()
 		return
 	}
