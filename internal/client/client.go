@@ -33,12 +33,36 @@ func RunTCPTunnel(port uint16) error {
 
 	fmt.Printf("Got ServerHello: %v\n", serverHello)
 
-	var newConnection = protocol.NewConnection{}
-	if err := dec.Decode(&newConnection); err != nil {
-		return err
+	for {
+		var newConnection = protocol.NewConnection{}
+		if err := dec.Decode(&newConnection); err != nil {
+			return err
+		}
+
+		fmt.Printf("Got NewConnection: %v\n", newConnection)
+
+		conn2, err := net.Dial("tcp", net.JoinHostPort(protocol.DefaultServerAddr, strconv.Itoa(int(protocol.ControlPort))))
+		if err != nil {
+			return err
+		}
+
+		enc2 := json.NewEncoder(conn2)
+
+		var acceptConnection = protocol.AcceptConnection{UUID: newConnection.UUID}
+		if err := enc2.Encode(acceptConnection); err != nil {
+			return err
+		}
+
+		fmt.Printf("Sent AcceptConnection: %v\n", acceptConnection)
+
+		localConn, err := net.Dial("tcp", "localhost:8080")
+		if err != nil {
+			return fmt.Errorf("ERROR")
+		}
+
+		protocol.Proxy(conn2, localConn)
+
+		fmt.Println("Connection ended")
 	}
-
-	fmt.Printf("Got NewConnection: %v\n", newConnection)
-
 	return nil
 }

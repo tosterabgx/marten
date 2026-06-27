@@ -16,7 +16,7 @@ var connsMu sync.RWMutex
 var outboundConnections = make(map[uuid.UUID]net.Conn)
 
 func getAvailablePort(desiredPort uint16) (uint16, error) {
-	for i := desiredPort; i < 65535; i++ {
+	for i := protocol.MinPort; i < protocol.MaxPort; i++ {
 		portsMu.RLock()
 		_, ok := occupiedPorts[i]
 		portsMu.RUnlock()
@@ -25,7 +25,6 @@ func getAvailablePort(desiredPort uint16) (uint16, error) {
 		}
 	}
 
-	// TODO: return an error
 	return 0, nil
 }
 
@@ -46,28 +45,29 @@ func registerListener(desiredPort uint16, controlConn net.Conn) (uint16, error) 
 	return port, nil
 }
 
-func handleConnection(conn net.Conn, controlConn net.Conn) {
-	defer conn.Close()
-
+func handleTunnelConnection(conn net.Conn, controlConn net.Conn) {
 	uuid := uuid.New()
 
+	connsMu.Lock()
 	outboundConnections[uuid] = conn
+	connsMu.Unlock()
 
 	newConnectinonRequest := protocol.NewConnection{UUID: uuid}
 	enc := json.NewEncoder(controlConn)
 	if err := enc.Encode(newConnectinonRequest); err != nil {
-		fmt.Println("couldn't encode a NewConnections:", err)
+		fmt.Println("Error encoding NewConnection:", err)
+		conn.Close()
 		return
 	}
 
-	fmt.Printf("Sent NewConnection: %v\n", newConnectinonRequest)
+	fmt.Println("Sent NewConnection:", newConnectinonRequest)
 }
 
 func handleListener(l net.Listener, controlConn net.Conn) {
 	defer l.Close()
 	defer controlConn.Close()
 
-	fmt.Println("start listening")
+	fmt.Println("Start listening")
 
 	for {
 		conn, err := l.Accept()
@@ -76,6 +76,8 @@ func handleListener(l net.Listener, controlConn net.Conn) {
 			continue
 		}
 
-		go handleConnection(conn, controlConn)
+		fmt.Println("Got a connection")
+
+		go handleTunnelConnection(conn, controlConn)
 	}
 }
