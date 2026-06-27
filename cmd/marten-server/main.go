@@ -8,7 +8,7 @@ import (
 
 func main() {
 	fmt.Println("Starting Marten server")
-	if err := server.RunTCPServer(); err != nil {
+	if err := server.RunControlServer(); err != nil {
 		panic(err)
 	}
 }

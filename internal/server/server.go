@@ -8,11 +8,8 @@ import (
 	"github.com/tosterabgx/marten/internal/protocol"
 )
 
-func handleConnection(conn net.Conn) {
-	defer conn.Close()
-
+func handleControlConnection(conn net.Conn) {
 	var clientHello protocol.ClientHello
-	var serverHello protocol.ServerHello
 
 	dec := json.NewDecoder(conn)
 	dec.DisallowUnknownFields()
@@ -22,7 +19,9 @@ func handleConnection(conn net.Conn) {
 	}
 
 	fmt.Printf("Got ClientHello: %v\n", clientHello)
-	serverHello.ActualPort = clientHello.RequiredPort
+	actualPort, _ := registerListener(clientHello.DesiredPort, conn) // TODO: handle error
+
+	serverHello := protocol.ServerHello{ActualPort: actualPort}
 
 	enc := json.NewEncoder(conn)
 	if err := enc.Encode(serverHello); err != nil {
@@ -33,7 +32,7 @@ func handleConnection(conn net.Conn) {
 	fmt.Printf("Sent ServerHello: %v\n", serverHello)
 }
 
-func RunTCPServer() error {
+func RunControlServer() error {
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", protocol.ControlPort))
 	if err != nil {
 		return err
@@ -47,6 +46,6 @@ func RunTCPServer() error {
 			continue
 		}
 
-		go handleConnection(conn)
+		go handleControlConnection(conn)
 	}
 }

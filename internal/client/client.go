@@ -16,7 +16,7 @@ func RunTCPTunnel(port uint16) error {
 	}
 	defer conn.Close()
 
-	var clientHello = protocol.ClientHello{RequiredPort: port}
+	var clientHello = protocol.ClientHello{DesiredPort: port}
 	var serverHello protocol.ServerHello
 
 	enc := json.NewEncoder(conn)
@@ -32,6 +32,13 @@ func RunTCPTunnel(port uint16) error {
 	}
 
 	fmt.Printf("Got ServerHello: %v\n", serverHello)
+
+	var newConnection = protocol.NewConnection{}
+	if err := dec.Decode(&newConnection); err != nil {
+		return err
+	}
+
+	fmt.Printf("Got NewConnection: %v\n", newConnection)
 
 	return nil
 }
