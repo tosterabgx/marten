@@ -43,6 +43,9 @@ func handleAcceptConnection(tunnelConn net.Conn, acceptConnection protocol.Accep
 	slog.Debug("start proxy")
 
 	protocol.Proxy(tunnelConn, externalConn)
+	connsMu.Lock()
+	delete(externalConns, uuid)
+	connsMu.Unlock()
 }
 
 func handleConnection(conn net.Conn) {
