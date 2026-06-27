@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 
@@ -49,7 +50,7 @@ func performConnectionAccept(dec *json.Decoder) (net.Conn, error) {
 func RunTCPTunnel(localPort uint16) error {
 	controlConn, err := net.Dial("tcp", controlAddr)
 	if err != nil {
-		return err
+		return errors.New("server unreachable")
 	}
 	defer controlConn.Close()
 
@@ -75,6 +76,7 @@ func RunTCPTunnel(localPort uint16) error {
 		localConn, err := net.Dial("tcp", localAddr)
 		if err != nil {
 			fmt.Printf("Error connecting to %v: %v\n", localAddr, err)
+			tunnelConn.Close()
 			continue
 		}
 

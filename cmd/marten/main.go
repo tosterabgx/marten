@@ -19,9 +19,10 @@ func main() {
 	}
 
 	rootCmd.AddCommand(&cobra.Command{
-		Use:   "tcp <port>",
-		Short: "Expose a local TCP port through the tunnel",
-		Args:  cobra.ExactArgs(1),
+		Use:          "tcp <port>",
+		Short:        "Expose a local TCP port through the tunnel",
+		SilenceUsage: true,
+		Args:         cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			port, err := strconv.ParseUint(args[0], 10, 16)
 			if err != nil {
