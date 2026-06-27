@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strconv"
 
 	"github.com/tosterabgx/marten/internal/protocol"
 )
 
 func RunTCPTunnel(port uint16) error {
-	conn, err := net.Dial("tcp", fmt.Sprintf("localhost:%d", protocol.ControlPort))
+	conn, err := net.Dial("tcp", net.JoinHostPort(protocol.DefaultServerAddr, strconv.Itoa(int(protocol.ControlPort))))
 	if err != nil {
 		return err
 	}
