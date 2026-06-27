@@ -20,7 +20,7 @@ var externalConns = make(map[uuid.UUID]net.Conn)
 func getAvailablePort() (uint16, error) {
 	const maxAttempts = 150
 
-	rangeSize := int(protocol.MaxPort) - int(protocol.MinPort)
+	rangeSize := int(protocol.MaxPort) - int(protocol.MinPort) + 1
 
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		port := protocol.MinPort + uint16(rand.Intn(rangeSize))
@@ -49,6 +49,9 @@ func registerListener(controlConn net.Conn) (net.Listener, uint16, error) {
 	addr := protocol.JoinAddr("", port)
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
+		portsMu.Lock()
+		delete(occupiedPorts, port)
+		portsMu.Unlock()
 		return nil, 0, err
 	}
 

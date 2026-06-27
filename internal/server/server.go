@@ -70,10 +70,11 @@ func handleConnection(conn net.Conn) {
 		if err != nil {
 			slog.Warn("failed to handle ClientHello", "error", err)
 			conn.Close()
+			return
 		}
+		defer l.Close()
 
 		io.Copy(io.Discard, conn)
-		l.Close()
 	} else if data, ok := raw["AcceptConnection"]; ok {
 		var acceptConnection protocol.AcceptConnection
 		if err := json.Unmarshal(data, &acceptConnection.UUID); err != nil {
