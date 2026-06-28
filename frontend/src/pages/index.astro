@@ -1,11 +1,71 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import { Image } from "astro:assets";
+import logo from "../images/logo.png";
+import title from "../images/title.png";
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const domain = Astro.site?.hostname ?? "localhost";
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<BaseLayout title="Marten">
+  <Nav />
+  <main id="hero">
+    <Image src={logo} alt="logo" loading="eager" class="logo" />
+    <Image src={title} alt="title" loading="eager" class="title" />
+    <h1 class="slogan">
+      Expose a local port to the internet with just&nbsp;
+      <span style="color: #edbb7e;">one command, no account required.</span>
+    </h1>
+    <div class="command">
+      <span style="color: #d0802d;">$</span>
+      <span>curl -fsSL https://get.{domain} | sh</span>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  #hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    padding: 78px 40px 70px;
+    text-align: center;
+  }
+
+  .logo {
+    height: 78px;
+    width: auto;
+  }
+
+  .title {
+    width: 330px;
+    height: auto;
+  }
+
+  .slogan {
+    font-family: var(--font-space-grotesk);
+    font-weight: 300;
+    font-size: 34px;
+    line-height: 1.32;
+    letter-spacing: 0.2px;
+    max-width: 680px;
+    margin: 0;
+    margin-bottom: 8px;
+  }
+
+  .command {
+    font-family: var(--font-mono);
+    font-size: 14.5px;
+    display: flex;
+    align-items: center;
+    gap: 12;
+    padding: 12px 18px;
+    background: #1e2122;
+    border: 1px solid rgba(244, 232, 214, 0.14);
+    border-radius: 7px;
+  }
+</style>

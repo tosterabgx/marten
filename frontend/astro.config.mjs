@@ -1,7 +1,26 @@
 // @ts-check
-import { defineConfig } from 'astro/config';
+import { defineConfig, fontProviders } from 'astro/config';
 
-// https://astro.build/config
 export default defineConfig({
-  site: "https://marten.tosterabgx.me/"
+  site: "https://marten.tosterabgx.me/",
+  fonts: [
+    {
+      provider: fontProviders.fontsource(),
+      name: "Hanken Grotesk",
+      cssVariable: "--font-grotesk",
+      fallbacks: ["sans-serif"]
+    },
+    {
+      provider: fontProviders.fontsource(),
+      name: "Space Grotesk",
+      cssVariable: "--font-space-grotesk",
+      fallbacks: ["sans-serif"]
+    },
+    {
+      provider: fontProviders.fontsource(),
+      name: "JetBrains Mono",
+      cssVariable: "--font-mono",
+      fallbacks: ["monospace"]
+    }
+  ]
 });
