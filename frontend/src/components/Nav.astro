@@ -1,0 +1,39 @@
+---
+import { Image } from "astro:assets";
+import branding from "../images/dark_branding.png";
+---
+
+<nav>
+  <Image src={branding} alt="branding" loading="eager" />
+
+  <div class="links">
+    <a href="/docs">Docs</a>
+    <a href="https://github.com/tosterabgx/marten">GitHub</a>
+  </div>
+</nav>
+
+<style>
+  nav {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 26px 40px;
+  }
+
+  img {
+    height: 30px;
+    width: auto;
+  }
+
+  .links {
+    display: flex;
+    gap: 30px;
+    font-size: 16px;
+  }
+
+  .links a {
+    color: #9b8e7c;
+    text-decoration: none;
+  }
+</style>
