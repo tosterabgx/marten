@@ -12,18 +12,27 @@ import (
 var controlAddr = protocol.JoinAddr(protocol.DefaultServerAddr, protocol.ControlPort)
 
 func performHandshake(enc *json.Encoder, dec *json.Decoder) (uint16, error) {
-	var clientHello = protocol.ClientHello{DesiredPort: 0}
+	clientMessage, err := protocol.NewMessage(protocol.TypeClientHello, protocol.ClientHello{})
+	if err != nil {
+		return 0, err
+	}
+
+	var serverMessage protocol.Message
+
+	if err := enc.Encode(clientMessage); err != nil {
+		return 0, err
+	}
+
+	if err := dec.Decode(&serverMessage); err != nil {
+		return 0, err
+	}
+
 	var serverHello protocol.ServerHello
-
-	if err := enc.Encode(clientHello); err != nil {
+	if err := serverMessage.Decode(&serverHello); err != nil {
 		return 0, err
 	}
 
-	if err := dec.Decode(&serverHello); err != nil {
-		return 0, err
-	}
-
-	return serverHello.ActualPort, nil
+	return *serverHello.Port, nil
 }
 
 func performConnectionAccept(dec *json.Decoder) (net.Conn, error) {
@@ -57,29 +66,29 @@ func RunTCPTunnel(localPort uint16) error {
 	enc := json.NewEncoder(controlConn)
 	dec := json.NewDecoder(controlConn)
 
-	actualPort, err := performHandshake(enc, dec)
+	serverPort, err := performHandshake(enc, dec)
 	if err != nil {
 		return err
 	}
 
 	localAddr := protocol.JoinAddr("localhost", localPort)
-	actualAddr := protocol.JoinAddr(protocol.DefaultServerAddr, actualPort)
-	fmt.Printf("Tunnel set:\n  %v -> %v\n", localAddr, actualAddr)
+	serverAddr := protocol.JoinAddr(protocol.DefaultServerAddr, serverPort)
+	fmt.Printf("Tunnel set:\n  %v -> %v\n", localAddr, serverAddr)
 
 	for {
-		tunnelConn, err := performConnectionAccept(dec)
+		_, err := performConnectionAccept(dec)
 		if err != nil {
 			fmt.Printf("Error creating tunnel: %v\n", err)
 			continue
 		}
 
-		localConn, err := net.Dial("tcp", localAddr)
-		if err != nil {
-			fmt.Printf("Error connecting to %v: %v\n", localAddr, err)
-			tunnelConn.Close()
-			continue
-		}
+		// localConn, err := net.Dial("tcp", localAddr)
+		// if err != nil {
+		// 	fmt.Printf("Error connecting to %v: %v\n", localAddr, err)
+		// 	tunnelConn.Close()
+		// 	continue
+		// }
 
-		go protocol.Proxy(tunnelConn, localConn)
+		// go protocol.Proxy(tunnelConn, localConn)
 	}
 }

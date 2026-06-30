@@ -1,35 +1,53 @@
 package protocol
 
 import (
-	"net"
-	"strconv"
+	"encoding/json"
 
 	"github.com/google/uuid"
 )
 
-const ControlPort uint16 = 6472
-const MinPort uint16 = 6000
-const MaxPort uint16 = 8000
+type MessageType string
 
-const DefaultServerAddr = "marten.tosterabgx.me"
+const (
+	TypeClientHello      MessageType = "ClientHello"
+	TypeServerHello      MessageType = "ServerHello"
+	TypeNewConnection    MessageType = "NewConnection"
+	TypeAcceptConnection MessageType = "AcceptConnection"
+)
 
-func JoinAddr(addr string, port uint16) string {
-	addr = net.JoinHostPort(addr, strconv.Itoa(int(port)))
-	return addr
+type anyMessage interface {
+	ClientHello | ServerHello | NewConnection | AcceptConnection
+}
+
+type Message struct {
+	Type    MessageType     `json:"type"`
+	Payload json.RawMessage `json:"payload"`
+}
+
+func (m Message) Decode(v any) error {
+	return json.Unmarshal(m.Payload, v)
+}
+
+func NewMessage[T anyMessage](t MessageType, payload T) (Message, error) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return Message{}, err
+	}
+	return Message{Type: t, Payload: data}, nil
 }
 
 type ClientHello struct {
-	DesiredPort uint16 `json:"ClientHello"`
 }
 
 type ServerHello struct {
-	ActualPort uint16 `json:"ServerHello"`
+	Port      *uint16 `json:"port,omitempty"`
+	Subdomain *string `json:"subdomain,omitempty"`
 }
 
 type NewConnection struct {
-	UUID uuid.UUID `json:"NewConnection"`
+	UUID uuid.UUID `json:"uuid"`
 }
 
 type AcceptConnection struct {
-	UUID uuid.UUID `json:"AcceptConnection"`
+	UUID uuid.UUID `json:"uuid"`
 }
