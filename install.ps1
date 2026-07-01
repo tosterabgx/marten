@@ -2,7 +2,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$Repo    = "toserabgx/marten"
+$Repo    = "tosterabgx/marten"
 $BinName = "marten.exe"
 
 $arch = (Get-CimInstance Win32_Processor).Architecture
