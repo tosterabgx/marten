@@ -1,5 +1,5 @@
-#!/bin/bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 
 REPO="tosterabgx/marten"
 INSTALL_DIR="/usr/local/bin"

@@ -19,8 +19,14 @@ marten tcp 3000
 
 ## Install
 
+Linux/MacOS:
 ```
-curl -fsSL https://get.marten.tosterabgx.me | sh
+curl -fsSL https://marten.tosterabgx.me/install.sh | sh
+```
+
+Windows:
+```
+irm https://marten.tosterabgx.me/install.ps1 | iex
 ```
 
 or build from source:

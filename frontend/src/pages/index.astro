@@ -7,6 +7,8 @@ import logo from "../images/logo.png";
 import title from "../images/title.png";
 
 const domain = Astro.site?.hostname ?? "localhost";
+const linuxInstall = `curl -fsSL https://${domain}/install.sh | sh`;
+const winInstall = `irm https://${domain}/install.ps1 | iex`;
 ---
 
 <BaseLayout title="Marten">
@@ -18,9 +20,9 @@ const domain = Astro.site?.hostname ?? "localhost";
       Expose a local port to the internet with just&nbsp;
       <span style="color: #edbb7e;">one command, no account required.</span>
     </h1>
-    <div class="command">
+    <div class="snippet">
       <span style="color: #d0802d;">$</span>
-      <span>curl -fsSL https://get.{domain} | bash</span>
+      <span id="command">{linuxInstall}</span>
     </div>
   </main>
   <Footer />
@@ -37,7 +39,7 @@ const domain = Astro.site?.hostname ?? "localhost";
   }
 
   .logo {
-    height: 78px;
+    height: 87px;
     width: auto;
   }
 
@@ -57,15 +59,24 @@ const domain = Astro.site?.hostname ?? "localhost";
     margin-bottom: 8px;
   }
 
-  .command {
+  .snippet {
     font-family: var(--font-mono);
     font-size: 14.5px;
     display: flex;
     align-items: center;
-    gap: 12;
+    gap: 12px;
     padding: 12px 18px;
     background: #1e2122;
     border: 1px solid rgba(244, 232, 214, 0.14);
     border-radius: 7px;
   }
 </style>
+
+<script define:vars={{ winInstall }}>
+  const command = document.querySelector("#command");
+  const isWin = navigator.userAgent.includes("Windows");
+
+  if (isWin && command) {
+    command.textContent = winInstall;
+  }
+</script>
