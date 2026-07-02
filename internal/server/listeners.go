@@ -99,9 +99,9 @@ func handleExternalConnection(conn net.Conn, controlConn net.Conn) {
 	externalConns[uuid] = conn
 	connsMu.Unlock()
 
-	newConnectionRequest := protocol.NewConnection{UUID: uuid}
-	enc := json.NewEncoder(controlConn)
-	if err := enc.Encode(newConnectionRequest); err != nil {
+	msg := protocol.NewMessage(protocol.NewConnection{UUID: uuid})
+
+	if err := json.NewEncoder(controlConn).Encode(msg); err != nil {
 		slog.Warn("NewConnection encoding failed", "error", err)
 
 		connsMu.Lock()
@@ -112,5 +112,5 @@ func handleExternalConnection(conn net.Conn, controlConn net.Conn) {
 		return
 	}
 
-	slog.Debug("sent NewConnection", "message", newConnectionRequest)
+	slog.Debug("sent NewConnection", "message", msg)
 }

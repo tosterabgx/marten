@@ -29,7 +29,22 @@ func main() {
 				return fmt.Errorf("invalid port %v", args[0])
 			}
 
-			return client.RunTCPTunnel(uint16(port))
+			return client.RunTunnel(uint16(port), false)
+		},
+	})
+
+	rootCmd.AddCommand(&cobra.Command{
+		Use:          "http <port>",
+		Short:        "Expose a local TCP port through the tunnel to http subdomain",
+		SilenceUsage: true,
+		Args:         cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			port, err := strconv.ParseUint(args[0], 10, 16)
+			if err != nil {
+				return fmt.Errorf("invalid port %v", args[0])
+			}
+
+			return client.RunTunnel(uint16(port), true)
 		},
 	})
 

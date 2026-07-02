@@ -20,37 +20,24 @@ func handleConnection(conn net.Conn) {
 		return
 	}
 
-	switch msg.Type {
-	case protocol.TypeClientHello:
-		var clientHello protocol.ClientHello
-		if err := msg.Decode(&clientHello); err != nil {
-			slog.Warn("incorrect ClientHello", "error", err)
-			conn.Close()
-			return
-		}
-
-		l, err := handleNewClient(conn, clientHello)
+	switch p := msg.Payload.(type) {
+	case protocol.ClientHello:
+		l, err := handleNewClient(conn, p)
 		if err != nil {
 			slog.Warn("failed to handle ClientHello", "error", err)
 			conn.Close()
 			return
 		}
 		defer l.Close()
-
 		io.Copy(io.Discard, conn)
-	case protocol.TypeAcceptConnection:
-		var acceptConnection protocol.AcceptConnection
-		if err := msg.Decode(&acceptConnection); err != nil {
-			slog.Warn("incorrect AcceptConnection", "error", err)
-			conn.Close()
-			return
-		}
 
-		err := handleAcceptConnection(conn, acceptConnection)
+	case protocol.AcceptConnection:
+		err := handleAcceptConnection(conn, p)
 		if err != nil {
 			slog.Warn("failed to handle AcceptConnection", "error", err)
 			conn.Close()
 		}
+
 	default:
 		slog.Warn("unknown message", "message", msg)
 	}
