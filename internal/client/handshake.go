@@ -18,6 +18,7 @@ func performHandshake(enc *json.Encoder, dec *json.Decoder, clientHello protocol
 	}
 
 	if err := dec.Decode(&serverMessage); err != nil {
+		fmt.Println("lol")
 		return protocol.ServerHello{}, err
 	}
 

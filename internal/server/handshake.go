@@ -19,8 +19,7 @@ func handleNewClient(conn net.Conn, clientHello protocol.ClientHello) (net.Liste
 
 	serverMessage := protocol.NewMessage(protocol.ServerHello{Port: port})
 
-	enc := json.NewEncoder(conn)
-	if err := enc.Encode(serverMessage); err != nil {
+	if err := json.NewEncoder(conn).Encode(serverMessage); err != nil {
 		return nil, fmt.Errorf("ServerHello encoding failed: %v", err)
 	}
 
@@ -41,7 +40,11 @@ func handleAcceptConnection(tunnelConn net.Conn, acceptConnection protocol.Accep
 
 	slog.Debug("start proxy")
 
-	protocol.Proxy(tunnelConn, externalConn)
+	if len(externalConn.initial) > 0 {
+		tunnelConn.Write(externalConn.initial)
+	}
+
+	protocol.Proxy(tunnelConn, externalConn.conn)
 	connsMu.Lock()
 	delete(externalConns, uuid)
 	connsMu.Unlock()

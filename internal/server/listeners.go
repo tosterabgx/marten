@@ -12,10 +12,15 @@ import (
 	"github.com/tosterabgx/marten/internal/protocol"
 )
 
+type pendingConn struct {
+	conn    net.Conn
+	initial []byte
+}
+
 var portsMu sync.RWMutex
 var occupiedPorts = make(map[uint16]struct{})
 var connsMu sync.RWMutex
-var externalConns = make(map[uuid.UUID]net.Conn)
+var externalConns = make(map[uuid.UUID]pendingConn)
 
 func getAvailablePort() (uint16, error) {
 	const maxAttempts = 150
@@ -96,7 +101,7 @@ func handleExternalConnection(conn net.Conn, controlConn net.Conn) {
 	uuid := uuid.New()
 
 	connsMu.Lock()
-	externalConns[uuid] = conn
+	externalConns[uuid] = pendingConn{conn: conn}
 	connsMu.Unlock()
 
 	msg := protocol.NewMessage(protocol.NewConnection{UUID: uuid})

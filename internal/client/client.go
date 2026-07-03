@@ -36,7 +36,7 @@ func RunTunnel(localPort uint16, isHttp bool) error {
 
 	var serverAddr string
 	if isHttp {
-		serverAddr = serverHello.Subdomain + protocol.DefaultServerAddr
+		serverAddr = "http://" + serverHello.Subdomain + "." + protocol.DefaultServerAddr
 	} else {
 		serverAddr = protocol.JoinAddr(protocol.DefaultServerAddr, serverHello.Port)
 	}
@@ -55,6 +55,8 @@ func RunTunnel(localPort uint16, isHttp bool) error {
 			tunnelConn.Close()
 			continue
 		}
+
+		fmt.Println("start proxy")
 
 		go protocol.Proxy(tunnelConn, localConn)
 	}

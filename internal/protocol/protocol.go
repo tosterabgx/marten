@@ -31,6 +31,8 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 		Payload json.RawMessage `json:"payload"`
 	}
 
+	// fmt.Println(data)
+
 	if err := json.Unmarshal(data, &shadow); err != nil {
 		return err
 	}

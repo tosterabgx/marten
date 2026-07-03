@@ -14,6 +14,6 @@ FROM scratch
 
 COPY --from=build /marten-server /marten-server
 
-EXPOSE 6472
+EXPOSE 8080 6472
 
 ENTRYPOINT [ "/marten-server" ]

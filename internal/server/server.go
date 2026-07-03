@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"math/rand"
 	"net"
+	"strconv"
 
 	"github.com/tosterabgx/marten/internal/protocol"
 )
@@ -22,6 +24,18 @@ func handleConnection(conn net.Conn) {
 
 	switch p := msg.Payload.(type) {
 	case protocol.ClientHello:
+		if p.Type == "http" {
+			subdomain := "arbuz" + strconv.Itoa(rand.Intn(10000))
+			subdomainMu.Lock()
+			subdomainTunnels[subdomain] = conn
+			subdomainMu.Unlock()
+
+			serverHello := protocol.NewMessage(protocol.ServerHello{Subdomain: subdomain})
+			if err := json.NewEncoder(conn).Encode(serverHello); err != nil {
+				slog.Warn("ServerHello encoding failed", "error", err)
+			}
+			return
+		}
 		l, err := handleNewClient(conn, p)
 		if err != nil {
 			slog.Warn("failed to handle ClientHello", "error", err)
@@ -43,8 +57,8 @@ func handleConnection(conn net.Conn) {
 	}
 }
 
-func RunControlServer() error {
-	addr := protocol.JoinAddr("", protocol.ControlPort)
+func RunControlServer(port uint16) error {
+	addr := protocol.JoinAddr("", port)
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
