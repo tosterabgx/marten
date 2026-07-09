@@ -21,12 +21,12 @@ marten tcp 3000
 
 Linux/MacOS:
 ```
-curl -fsSL https://marten.tosterabgx.me/install.sh | sh
+curl -fsSL https://usemarten.tech/install.sh | sh
 ```
 
 Windows:
 ```
-irm https://marten.tosterabgx.me/install.ps1 | iex
+irm https://usemarten.tech/install.ps1 | iex
 ```
 
 or build from source:
