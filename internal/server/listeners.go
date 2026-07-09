@@ -1,21 +1,17 @@
 package server
 
 import (
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"math/rand"
 	"net"
 	"sync"
 
-	"github.com/google/uuid"
 	"github.com/tosterabgx/marten/internal/protocol"
 )
 
 var portsMu sync.RWMutex
 var occupiedPorts = make(map[uint16]struct{})
-var connsMu sync.RWMutex
-var externalConns = make(map[uuid.UUID]net.Conn)
 
 func getAvailablePort() (uint16, error) {
 	const maxAttempts = 150
@@ -88,29 +84,4 @@ func cleanupListener(l net.Listener, port uint16) {
 	portsMu.Unlock()
 
 	slog.Debug("listener cleaned up", "port", port)
-}
-
-func handleExternalConnection(conn net.Conn, controlConn net.Conn) {
-	slog.Debug("got new external connection")
-
-	uuid := uuid.New()
-
-	connsMu.Lock()
-	externalConns[uuid] = conn
-	connsMu.Unlock()
-
-	newConnectionRequest := protocol.NewConnection{UUID: uuid}
-	enc := json.NewEncoder(controlConn)
-	if err := enc.Encode(newConnectionRequest); err != nil {
-		slog.Warn("NewConnection encoding failed", "error", err)
-
-		connsMu.Lock()
-		delete(externalConns, uuid)
-		connsMu.Unlock()
-
-		conn.Close()
-		return
-	}
-
-	slog.Debug("sent NewConnection", "message", newConnectionRequest)
 }

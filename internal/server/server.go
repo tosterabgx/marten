@@ -2,99 +2,63 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log/slog"
+	"math/rand"
 	"net"
+	"strconv"
 
 	"github.com/tosterabgx/marten/internal/protocol"
 )
 
-func handleNewClient(conn net.Conn, clientHello protocol.ClientHello) (net.Listener, error) {
-	slog.Debug("got ClientHello", "message", clientHello)
-
-	l, actualPort, err := registerListener(conn)
-	if err != nil {
-		return nil, fmt.Errorf("listener registry failed: %v", err)
-	}
-	serverHello := protocol.ServerHello{ActualPort: actualPort}
-
-	enc := json.NewEncoder(conn)
-	if err := enc.Encode(serverHello); err != nil {
-		return nil, fmt.Errorf("ServerHello encoding failed: %v", err)
-	}
-
-	slog.Debug("sent ServerHello", "message", serverHello)
-	return l, nil
-}
-
-func handleAcceptConnection(tunnelConn net.Conn, acceptConnection protocol.AcceptConnection) error {
-	slog.Debug("got AcceptConnection", "message", acceptConnection)
-
-	uuid := acceptConnection.UUID
-	connsMu.RLock()
-	externalConn, ok := externalConns[uuid]
-	connsMu.RUnlock()
-	if !ok {
-		return fmt.Errorf("no external connection found with uuid=%v", uuid)
-	}
-
-	slog.Debug("start proxy")
-
-	protocol.Proxy(tunnelConn, externalConn)
-	connsMu.Lock()
-	delete(externalConns, uuid)
-	connsMu.Unlock()
-	return nil
-}
-
 func handleConnection(conn net.Conn) {
 	dec := json.NewDecoder(conn)
+	dec.DisallowUnknownFields()
 
-	var raw map[string]json.RawMessage
-	if err := dec.Decode(&raw); err != nil {
+	var msg protocol.Message
+	if err := dec.Decode(&msg); err != nil {
 		slog.Warn("incorrect message", "error", err)
 		conn.Close()
 		return
 	}
 
-	if data, ok := raw["ClientHello"]; ok {
-		var clientHello protocol.ClientHello
-		if err := json.Unmarshal(data, &clientHello.DesiredPort); err != nil {
-			slog.Warn("incorrect ClientHello", "error", err)
-			conn.Close()
+	switch p := msg.Payload.(type) {
+	case protocol.ClientHello:
+		if p.Type == "http" {
+			subdomain := "arbuz" + strconv.Itoa(rand.Intn(10000))
+			subdomainMu.Lock()
+			subdomainTunnels[subdomain] = conn
+			subdomainMu.Unlock()
+
+			serverHello := protocol.NewMessage(protocol.ServerHello{Subdomain: subdomain})
+			if err := json.NewEncoder(conn).Encode(serverHello); err != nil {
+				slog.Warn("ServerHello encoding failed", "error", err)
+			}
 			return
 		}
-
-		l, err := handleNewClient(conn, clientHello)
+		l, err := handleNewClient(conn, p)
 		if err != nil {
 			slog.Warn("failed to handle ClientHello", "error", err)
 			conn.Close()
 			return
 		}
 		defer l.Close()
-
 		io.Copy(io.Discard, conn)
-	} else if data, ok := raw["AcceptConnection"]; ok {
-		var acceptConnection protocol.AcceptConnection
-		if err := json.Unmarshal(data, &acceptConnection.UUID); err != nil {
-			slog.Warn("incorrect AcceptConnection", "error", err)
-			conn.Close()
-			return
-		}
 
-		err := handleAcceptConnection(conn, acceptConnection)
+	case protocol.AcceptConnection:
+		err := handleAcceptConnection(conn, p)
 		if err != nil {
 			slog.Warn("failed to handle AcceptConnection", "error", err)
 			conn.Close()
 		}
-	} else {
-		slog.Warn("unknown message", "message", raw)
+
+	default:
+		slog.Warn("unknown message", "message", msg)
 	}
 }
 
-func RunControlServer() error {
-	addr := protocol.JoinAddr("", protocol.ControlPort)
+func RunControlServer(port uint16) error {
+	addr := protocol.JoinAddr("", port)
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
