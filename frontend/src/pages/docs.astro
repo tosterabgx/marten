@@ -3,6 +3,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
 
+const domain = Astro.site?.hostname ?? "localhost";
+const linuxInstall = `curl -fsSL https://${domain}/install.sh | sh`;
+const winInstall = `irm https://${domain}/install.ps1 | iex`;
+
 const sections = [
   { id: "install", label: "Install" },
   { id: "usage", label: "Usage" },
@@ -31,10 +35,9 @@ const sections = [
         <h2>Install</h2>
         <p>Linux/MacOS:</p>
         <pre
-          class="code-block"><span class="prompt">$</span> curl -fsSL https://usemarten.tech/install.sh | sh</pre>
+          class="code-block"><span class="prompt">$</span> {linuxInstall}</pre>
         <p>Windows:</p>
-        <pre
-          class="code-block"><span class="prompt">$</span> irm https://usemarten.tech/install.ps1 | iex</pre>
+        <pre class="code-block"><span class="prompt">$</span> {winInstall}</pre>
         <p>Or build from source with Go:</p>
         <pre
           class="code-block"><span class="prompt">$</span> go install github.com/tosterabgx/marten/cmd/marten@latest</pre>
