@@ -32,7 +32,7 @@ func RunTunnel(localPort uint16, connType protocol.ConnType) error {
 	var serverAddr string
 	switch connType {
 	case protocol.TypeHTTP:
-		serverAddr = "http://" + serverHello.Subdomain + "." + protocol.DefaultServerAddr
+		serverAddr = "https://" + serverHello.Subdomain + "." + protocol.DefaultServerAddr
 	case protocol.TypeTCP:
 		serverAddr = protocol.JoinAddr(protocol.DefaultServerAddr, serverHello.Port)
 	}
