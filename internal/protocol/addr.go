@@ -7,12 +7,10 @@ import (
 
 const HTTPPort uint16 = 8080
 const ControlPort uint16 = 6472
-const MinPort uint16 = 6000
-const MaxPort uint16 = 8000
+const MinPort uint16 = 10000
+const MaxPort uint16 = 12000
 
-const DefaultServerAddr = "marten.tosterabgx.me"
-
-// const DefaultServerAddr = "localhost"
+const DefaultServerAddr = "usemarten.tech"
 
 func JoinAddr(addr string, port uint16) string {
 	addr = net.JoinHostPort(addr, strconv.Itoa(int(port)))

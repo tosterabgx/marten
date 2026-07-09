@@ -16,6 +16,13 @@ const (
 	TypeAcceptConnection MessageType = "AcceptConnection"
 )
 
+type ConnType string
+
+const (
+	TypeTCP  ConnType = "tcp"
+	TypeHTTP ConnType = "http"
+)
+
 type anyMessage interface {
 	getType() MessageType
 }
@@ -30,8 +37,6 @@ func (m *Message) UnmarshalJSON(data []byte) error {
 		Type    MessageType     `json:"type"`
 		Payload json.RawMessage `json:"payload"`
 	}
-
-	// fmt.Println(data)
 
 	if err := json.Unmarshal(data, &shadow); err != nil {
 		return err
@@ -83,7 +88,7 @@ func NewMessage(payload anyMessage) Message {
 }
 
 type ClientHello struct {
-	Type string `json:"type"`
+	Type ConnType `json:"type"`
 }
 
 type ServerHello struct {

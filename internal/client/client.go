@@ -11,7 +11,7 @@ import (
 
 var controlAddr = protocol.JoinAddr(protocol.DefaultServerAddr, protocol.ControlPort)
 
-func RunTunnel(localPort uint16, isHttp bool) error {
+func RunTunnel(localPort uint16, connType protocol.ConnType) error {
 	controlConn, err := net.Dial("tcp", controlAddr)
 	if err != nil {
 		return errors.New("server unreachable")
@@ -21,12 +21,7 @@ func RunTunnel(localPort uint16, isHttp bool) error {
 	enc := json.NewEncoder(controlConn)
 	dec := json.NewDecoder(controlConn)
 
-	clientHelloType := "tcp"
-	if isHttp {
-		clientHelloType = "http"
-	}
-
-	clientHello := protocol.ClientHello{Type: clientHelloType}
+	clientHello := protocol.ClientHello{Type: connType}
 	serverHello, err := performHandshake(enc, dec, clientHello)
 	if err != nil {
 		return err
@@ -35,12 +30,14 @@ func RunTunnel(localPort uint16, isHttp bool) error {
 	localAddr := protocol.JoinAddr("localhost", localPort)
 
 	var serverAddr string
-	if isHttp {
+	switch connType {
+	case protocol.TypeHTTP:
 		serverAddr = "http://" + serverHello.Subdomain + "." + protocol.DefaultServerAddr
-	} else {
+	case protocol.TypeTCP:
 		serverAddr = protocol.JoinAddr(protocol.DefaultServerAddr, serverHello.Port)
 	}
-	fmt.Printf("Tunnel set:\n  %v -> %v\n", localAddr, serverAddr)
+	fmt.Printf("→ forwarding %v -> %v\n", serverAddr, localAddr)
+	fmt.Println("→ tunnel established · ● live · press Ctrl+C to stop")
 
 	for {
 		tunnelConn, err := performConnectionAccept(dec)

@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tosterabgx/marten/internal/client"
+	"github.com/tosterabgx/marten/internal/protocol"
 )
 
 func main() {
@@ -29,7 +30,7 @@ func main() {
 				return fmt.Errorf("invalid port %v", args[0])
 			}
 
-			return client.RunTunnel(uint16(port), false)
+			return client.RunTunnel(uint16(port), protocol.TypeTCP)
 		},
 	})
 
@@ -44,7 +45,7 @@ func main() {
 				return fmt.Errorf("invalid port %v", args[0])
 			}
 
-			return client.RunTunnel(uint16(port), true)
+			return client.RunTunnel(uint16(port), protocol.TypeHTTP)
 		},
 	})
 
