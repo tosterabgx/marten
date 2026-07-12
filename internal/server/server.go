@@ -5,9 +5,12 @@ import (
 	"io"
 	"log/slog"
 	"net"
+	"time"
 
 	"github.com/tosterabgx/marten/internal/protocol"
 )
+
+var startTime = time.Now()
 
 func handleConnection(conn net.Conn) {
 	dec := json.NewDecoder(conn)

@@ -5,6 +5,7 @@ import (
 	"strconv"
 )
 
+const APIPort uint16 = 8081
 const HTTPPort uint16 = 8080
 const ControlPort uint16 = 6472
 const MinPort uint16 = 10000

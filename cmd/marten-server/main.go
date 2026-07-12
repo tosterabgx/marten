@@ -19,6 +19,12 @@ func main() {
 		}
 	}()
 
+	go func() {
+		if err := server.RunAPIServer(protocol.APIPort); err != nil {
+			log.Fatal("api server failed:", err)
+		}
+	}()
+
 	if err := server.RunControlServer(protocol.ControlPort); err != nil {
 		log.Fatal("control server failed:", err)
 	}
