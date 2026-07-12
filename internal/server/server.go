@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
-	"math/rand"
 	"net"
-	"strconv"
 
 	"github.com/tosterabgx/marten/internal/protocol"
 )
@@ -25,10 +23,11 @@ func handleConnection(conn net.Conn) {
 	switch p := msg.Payload.(type) {
 	case protocol.ClientHello:
 		if p.Type == "http" {
-			subdomain := "arbuz" + strconv.Itoa(rand.Intn(10000))
-			subdomainMu.Lock()
-			subdomainTunnels[subdomain] = conn
-			subdomainMu.Unlock()
+			subdomain, err := GetAvailableName(&conn)
+			if err != nil {
+				conn.Close()
+				return
+			}
 
 			serverHello := protocol.NewMessage(protocol.ServerHello{Subdomain: subdomain})
 			if err := json.NewEncoder(conn).Encode(serverHello); err != nil {

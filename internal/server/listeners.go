@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"log/slog"
 	"math/rand"
 	"net"
@@ -18,7 +19,7 @@ func getAvailablePort() (uint16, error) {
 
 	rangeSize := int(protocol.MaxPort) - int(protocol.MinPort) + 1
 
-	for attempt := 0; attempt < maxAttempts; attempt++ {
+	for range maxAttempts {
 		port := protocol.MinPort + uint16(rand.Intn(rangeSize))
 
 		portsMu.Lock()
@@ -33,7 +34,7 @@ func getAvailablePort() (uint16, error) {
 		}
 	}
 
-	return 0, errors.New("no available port after 150 attempts")
+	return 0, fmt.Errorf("no available port after %d attempts", maxAttempts)
 }
 
 func registerListener(controlConn net.Conn) (net.Listener, uint16, error) {
