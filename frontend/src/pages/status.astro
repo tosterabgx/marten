@@ -1,0 +1,37 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+import { Image } from "astro:assets";
+import logo from "../images/logo.png";
+import title from "../images/title.png";
+
+const domain = Astro.site?.hostname ?? "localhost";
+const linuxInstall = `curl -fsSL https://${domain}/install.sh | sh`;
+const winInstall = `irm https://${domain}/install.ps1 | iex`;
+---
+
+<BaseLayout title="Marten">
+  <Nav />
+  <main>
+    <h1>It's working! Don't you believe me? :p</h1>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    padding: 78px 40px 70px;
+    text-align: center;
+  }
+
+  h1 {
+    font-family: var(--font-space-grotesk);
+    font-weight: 300;
+    font-size: 40px;
+  }
+</style>
