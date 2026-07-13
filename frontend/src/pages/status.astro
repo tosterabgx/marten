@@ -2,19 +2,23 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Nav from "../components/Nav.astro";
 import Footer from "../components/Footer.astro";
-import { Image } from "astro:assets";
-import logo from "../images/logo.png";
-import title from "../images/title.png";
-
-const domain = Astro.site?.hostname ?? "localhost";
-const linuxInstall = `curl -fsSL https://${domain}/install.sh | sh`;
-const winInstall = `irm https://${domain}/install.ps1 | iex`;
 ---
 
-<BaseLayout title="Marten">
+<BaseLayout title="Marten Status">
   <Nav />
   <main>
-    <h1>It's working! Don't you believe me? :p</h1>
+    <h1>Status</h1>
+
+    <div class="tiles">
+      <div class="tile">
+        <span class="tile-label">Uptime</span>
+        <span class="tile-value" id="uptime-value">&mdash;</span>
+      </div>
+      <div class="tile">
+        <span class="tile-label">Active tunnels</span>
+        <span class="tile-value" id="tunnels-value">&mdash;</span>
+      </div>
+    </div>
   </main>
   <Footer />
 </BaseLayout>
@@ -25,7 +29,7 @@ const winInstall = `irm https://${domain}/install.ps1 | iex`;
     flex-direction: column;
     align-items: center;
     gap: 30px;
-    padding: 78px 40px 70px;
+    padding: 78px 40px 90px;
     text-align: center;
   }
 
@@ -33,5 +37,52 @@ const winInstall = `irm https://${domain}/install.ps1 | iex`;
     font-family: var(--font-space-grotesk);
     font-weight: 300;
     font-size: 40px;
+    margin: 0;
+  }
+
+  .tiles {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .tile {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 180px;
+    padding: 20px 26px;
+    background: #1e2122;
+    border: 1px solid rgba(244, 232, 214, 0.14);
+    border-radius: 10px;
+  }
+
+  .tile-label {
+    font-size: 13px;
+    color: #9b8e7c;
+  }
+
+  .tile-value {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-variant-numeric: tabular-nums;
   }
 </style>
+
+<script>
+  const uptimeEl = document.querySelector("#uptime-value");
+  const tunnelsEl = document.querySelector("#tunnels-value");
+
+  async function loadStatus() {
+    if (!uptimeEl || !tunnelsEl) return;
+
+    const data = await (await fetch("/api/status")).json();
+
+    uptimeEl.textContent = data.uptime ?? "—";
+    tunnelsEl.textContent = data.active_tunnels ?? "—";
+  }
+
+  loadStatus();
+  setInterval(loadStatus, 10000);
+</script>
