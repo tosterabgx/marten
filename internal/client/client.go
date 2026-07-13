@@ -53,7 +53,7 @@ func RunTunnel(localPort uint16, connType protocol.ConnType) error {
 			continue
 		}
 
-		fmt.Println("start proxy")
+		//fmt.Println("start proxy")
 
 		go protocol.Proxy(tunnelConn, localConn)
 	}
