@@ -1,7 +1,9 @@
 package server
 
 import (
+	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net"
@@ -75,7 +77,13 @@ func handleConnection(conn net.Conn) {
 
 func RunControlServer(port uint16) error {
 	addr := protocol.JoinAddr("", port)
-	l, err := net.Listen("tcp", addr)
+
+	tlsConfig, err := LoadTLSConfig()
+	if err != nil {
+		return fmt.Errorf("TLS setup: %w", err)
+	}
+
+	l, err := tls.Listen("tcp", addr, tlsConfig)
 	if err != nil {
 		return err
 	}

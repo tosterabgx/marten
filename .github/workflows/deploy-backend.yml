@@ -70,4 +70,4 @@ jobs:
             docker pull ${{ needs.build-and-push.outputs.image }}
             docker stop marten-server || true
             docker rm marten-server || true
-            docker run -d --name marten-server --restart unless-stopped --network host ${{ needs.build-and-push.outputs.image }}
+            docker run -d --name marten-server --restart unless-stopped --network host -v /var/lib/caddy/.local/share/caddy:/var/lib/caddy/.local/share/caddy:ro ${{ needs.build-and-push.outputs.image }}

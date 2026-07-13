@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -12,7 +13,10 @@ import (
 var controlAddr = protocol.JoinAddr(protocol.DefaultTunnelAddr, protocol.ControlPort)
 
 func RunTunnel(localPort uint16, connType protocol.ConnType) error {
-	controlConn, err := net.Dial("tcp", controlAddr)
+	controlConn, err := tls.Dial("tcp", controlAddr, &tls.Config{
+		InsecureSkipVerify: false,
+		ServerName:         protocol.DefaultTunnelAddr,
+	})
 	if err != nil {
 		return errors.New("server unreachable")
 	}
