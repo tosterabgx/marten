@@ -25,9 +25,10 @@ func handleConnection(conn net.Conn) {
 
 	switch p := msg.Payload.(type) {
 	case protocol.ClientHello:
-		if p.Type == "http" {
+		if p.Type == protocol.TypeHTTP {
 			subdomain, err := GetAvailableName(&conn)
 			if err != nil {
+				slog.Warn("failed to handle ClientHello", "error", err)
 				conn.Close()
 				return
 			}
@@ -36,16 +37,29 @@ func handleConnection(conn net.Conn) {
 			if err := json.NewEncoder(conn).Encode(serverHello); err != nil {
 				slog.Warn("ServerHello encoding failed", "error", err)
 			}
-			return
-		}
-		l, err := handleNewClient(conn, p)
-		if err != nil {
-			slog.Warn("failed to handle ClientHello", "error", err)
+
+			defer func() {
+				subdomainMu.Lock()
+				delete(subdomainTunnels, subdomain)
+				subdomainMu.Unlock()
+			}()
+			io.Copy(io.Discard, conn)
+
+		} else if p.Type == protocol.TypeTCP {
+			l, err := handleNewClient(conn, p)
+			if err != nil {
+				slog.Warn("failed to handle ClientHello", "error", err)
+				conn.Close()
+				return
+			}
+			defer l.Close()
+			io.Copy(io.Discard, conn)
+
+		} else {
+			slog.Warn("unknown ClientHello type", "type", p.Type)
 			conn.Close()
 			return
 		}
-		defer l.Close()
-		io.Copy(io.Discard, conn)
 
 	case protocol.AcceptConnection:
 		err := handleAcceptConnection(conn, p)
