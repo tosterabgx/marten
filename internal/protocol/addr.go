@@ -11,6 +11,7 @@ const ControlPort uint16 = 6472
 const MinPort uint16 = 10000
 const MaxPort uint16 = 12000
 
+const DefaultTunnelAddr = "tunnel.usemarten.tech"
 const DefaultServerAddr = "usemarten.tech"
 
 func JoinAddr(addr string, port uint16) string {

@@ -9,7 +9,7 @@ import (
 	"github.com/tosterabgx/marten/internal/protocol"
 )
 
-var controlAddr = protocol.JoinAddr(protocol.DefaultServerAddr, protocol.ControlPort)
+var controlAddr = protocol.JoinAddr(protocol.DefaultTunnelAddr, protocol.ControlPort)
 
 func RunTunnel(localPort uint16, connType protocol.ConnType) error {
 	controlConn, err := net.Dial("tcp", controlAddr)
