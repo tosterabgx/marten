@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -40,7 +41,10 @@ func performConnectionAccept(dec *json.Decoder) (net.Conn, error) {
 		return nil, fmt.Errorf("expected NewConnection, but received unexpected message type: %T", msg.Payload)
 	}
 
-	tunnelConn, err := net.Dial("tcp", controlAddr)
+	tunnelConn, err := tls.Dial("tcp", controlAddr, &tls.Config{
+		InsecureSkipVerify: false,
+		ServerName:         protocol.DefaultTunnelAddr,
+	})
 	if err != nil {
 		return nil, err
 	}
