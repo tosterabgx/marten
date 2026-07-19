@@ -1,0 +1,188 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Nav from "../components/Nav.astro";
+import Footer from "../components/Footer.astro";
+---
+
+<BaseLayout title="Marten Terms of Service">
+  <Nav />
+  <main>
+    <h1>Terms of Service</h1>
+    <div>
+      <h2>1. About marten</h2>
+      <p>
+        marten is an open-source reverse tunnel tool that allows users to expose
+        local services to the internet. These Terms of Service ("Terms") govern
+        your use of the marten software and the public server hosted at
+        usemarten.tech ("the Service").
+      </p>
+      <h2>2. Acceptance</h2>
+      <p>
+        By using the Service, you agree to these Terms. If you do not agree, do
+        not use the Service.
+      </p>
+      <h2>3. Who can use the Service</h2>
+      <p>
+        You must be at least 13 years old to use the Service. By using it, you
+        represent that you meet this requirement.
+      </p>
+      <h2>4. Your responsibilities</h2>
+      <p>
+        You are solely responsible for:
+        <ul>
+          <li>Everything that passes through your tunnel</li>
+          <li>All content served via your tunnel URL</li>
+          <li>
+            Ensuring your use of the Service complies with all applicable laws
+            in your country and any country where your content is accessed
+          </li>
+        </ul>
+        You agree not to use the Service to:
+        <ul>
+          <li>Distribute malware, ransomware, or other malicious software</li>
+          <li>Host phishing pages or other deceptive content</li>
+          <li>Serve illegal content of any kind</li>
+          <li>Conduct DDoS attacks or other network abuse</li>
+          <li>Infringe any third party's intellectual property rights</li>
+          <li>Circumvent security controls of other systems</li>
+        </ul>
+      </p>
+      <h2>5. No responsibility for tunnel content</h2><p>
+        marten operates as a passive conduit. It forwards bytes between your
+        local service and visitors, without inspecting, modifying, or storing
+        the content of those bytes. <strong
+          >marten accepts no responsibility whatsoever for any content served
+          through any tunnel.</strong
+        > The operator of the tunnel (you) is solely and entirely responsible for
+        any and all content, services, or data made accessible via your tunnel URL.
+        This includes but is not limited to: any harm caused to third parties by content
+        served through your tunnel, any legal claims arising from content served through
+        your tunnel, and any regulatory violations related to content served through
+        your tunnel.
+      </p>
+      <h2>6. Termination</h2>
+      <p>
+        We reserve the right to terminate or suspend your access to the Service
+        at any time, without notice, for any reason, including but not limited
+        to violation of these Terms or conduct that we determine to be harmful
+        to other users, third parties, or the Service itself.
+      </p>
+      <h2>7. Service availability</h2>
+      <p>
+        Marten is a free, open-source project maintained in spare time. No
+        promises are made about uptime, reliability, performance, security, or
+        continued availability. The service may go down, change, or disappear at
+        any time without notice. You have no entitlement to continued access or
+        any particular level of service quality.
+      </p>
+      <h2>8. Disclaimer of warranties</h2>
+      <p>
+        THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE," WITHOUT WARRANTY OF
+        ANY KIND. TO THE FULLEST EXTENT PERMITTED BY LAW, WE DISCLAIM ALL
+        WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+      </p>
+      <h2>9. No obligation to anyone</h2>
+      <p>
+        THE OPERATOR OF USEMARTEN.TECH OWES NOTHING TO ANY USER OF THE SERVICE.
+        USE IS ENTIRELY AT YOUR OWN RISK. By using the Service you acknowledge
+        that:
+        <ul>
+          <li>You have no entitlement to continued access</li>
+          <li>You have no entitlement to any level of service quality</li>
+          <li>
+            You have no entitlement to support, assistance, or compensation of
+            any kind
+          </li>
+          <li>
+            No relationship of obligation exists between you and the operator
+          </li>
+        </ul>
+      </p>
+      <h2>10. Limitation of liability</h2><p>
+        TO THE FULLEST EXTENT PERMITTED BY LAW, THE OPERATOR OF USEMARTEN.TECH
+        SHALL NOT BE LIABLE FOR ANY DAMAGES OF ANY KIND — DIRECT, INDIRECT,
+        INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE — ARISING OUT OF OR IN
+        CONNECTION WITH YOUR USE OF OR INABILITY TO USE THE SERVICE. IN ANY
+        CASE, TOTAL LIABILITY SHALL NOT EXCEED €0.
+      </p>
+      <h2>11. Indemnification</h2><p>
+        You agree to defend, indemnify, and hold harmless the operator of marten
+        and usemarten.tech from any claims, damages, losses, costs, or expenses
+        (including reasonable legal fees) arising out of or related to your use
+        of the Service or any content served through your tunnel.
+      </p>
+      <h2>12. Abuse reporting</h2><p>
+        If you believe someone is using the Service to serve illegal or harmful
+        content, please report it to: <b>abuse@usemarten.tech</b> We will investigate
+        reports and take appropriate action, which may include terminating the relevant
+        tunnel.
+      </p>
+      <h2>13. Changes to these Terms</h2>
+      <p>
+        We may update these Terms at any time. Continued use of the Service
+        after changes constitutes acceptance of the updated Terms.
+      </p>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  main {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 50px 40px 90px;
+  }
+
+  h1 {
+    font-family: var(--font-space-grotesk);
+    font-weight: 300;
+    font-size: 40px;
+    margin: 0 0 40px;
+  }
+
+  h2 {
+    font-family: var(--font-space-grotesk);
+    font-weight: 400;
+    font-size: 20px;
+    margin: 0 0 16px;
+    padding-top: 40px;
+    border-top: 1px solid rgba(244, 232, 214, 0.08);
+  }
+
+  h2:first-of-type {
+    padding-top: 0;
+    border-top: none;
+  }
+
+  p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #d8cbb4;
+    margin: 0 0 14px;
+  }
+
+  ul {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #d8cbb4;
+    padding-left: 20px;
+    margin: 10px 0 0;
+  }
+
+  li {
+    margin-bottom: 6px;
+  }
+
+  strong {
+    color: #edbb7e;
+    font-weight: 600;
+  }
+
+  b {
+    font-family: var(--font-mono);
+    font-weight: 400;
+    color: #edbb7e;
+  }
+</style>
