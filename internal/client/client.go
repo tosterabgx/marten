@@ -38,7 +38,7 @@ func RunTunnel(localPort uint16, connType protocol.ConnType) error {
 	case protocol.TypeHTTP:
 		serverAddr = "https://" + serverHello.Subdomain + "." + protocol.DefaultServerAddr
 	case protocol.TypeTCP:
-		serverAddr = protocol.JoinAddr(protocol.DefaultServerAddr, serverHello.Port)
+		serverAddr = protocol.JoinAddr(protocol.DefaultTunnelAddr, serverHello.Port)
 	}
 	fmt.Printf("→ forwarding %v -> %v\n", serverAddr, localAddr)
 	fmt.Println("→ tunnel established · ● live · press Ctrl+C to stop")
