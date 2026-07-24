@@ -20,7 +20,7 @@ func handleConnection(conn net.Conn) {
 
 	var msg protocol.Message
 	if err := dec.Decode(&msg); err != nil {
-		slog.Warn("incorrect message", "error", err)
+		slog.Debug("incorrect message", "error", err)
 		conn.Close()
 		return
 	}
@@ -40,6 +40,11 @@ func handleConnection(conn net.Conn) {
 				slog.Warn("ServerHello encoding failed", "error", err)
 			}
 
+			slog.Info("registered HTTP tunnel",
+				"subdomain", subdomain,
+				"ip", conn.RemoteAddr().String(),
+			)
+
 			defer func() {
 				subdomainMu.Lock()
 				delete(subdomainTunnels, subdomain)
@@ -54,6 +59,7 @@ func handleConnection(conn net.Conn) {
 				conn.Close()
 				return
 			}
+
 			defer l.Close()
 			io.Copy(io.Discard, conn)
 

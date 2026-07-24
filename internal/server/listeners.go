@@ -60,7 +60,7 @@ func registerListener(controlConn net.Conn) (net.Listener, uint16, error) {
 func handleListener(l net.Listener, controlConn net.Conn, port uint16) {
 	defer cleanupListener(l, port)
 
-	slog.Info("listening external", "address", l.Addr().String())
+	slog.Debug("listening external tcp", "address", l.Addr().String())
 
 	for {
 		conn, err := l.Accept()

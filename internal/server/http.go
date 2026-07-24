@@ -30,7 +30,7 @@ func handleHTTP(w http.ResponseWriter, r *http.Request) {
 	subdomainMu.RUnlock()
 
 	if !ok {
-		slog.Warn("no tunnel for subdomain", "subdomain", subdomain)
+		slog.Debug("no tunnel for subdomain", "subdomain", subdomain)
 		http.Error(w, "no active tunnel at this address", http.StatusNotFound)
 		return
 	}
@@ -71,5 +71,5 @@ func handleHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Info("sent NewConnection", "subdomain", subdomain, "uuid", id)
+	slog.Debug("sent NewConnection", "subdomain", subdomain, "uuid", id)
 }

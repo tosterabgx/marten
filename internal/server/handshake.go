@@ -17,6 +17,11 @@ func handleNewClient(conn net.Conn, clientHello protocol.ClientHello) (net.Liste
 		return nil, fmt.Errorf("listener registry failed: %v", err)
 	}
 
+	slog.Info("registered TCP tunnel",
+		"port", port,
+		"ip", conn.RemoteAddr().String(),
+	)
+
 	serverMessage := protocol.NewMessage(protocol.ServerHello{Port: port})
 
 	if err := json.NewEncoder(conn).Encode(serverMessage); err != nil {
