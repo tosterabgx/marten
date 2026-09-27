@@ -1,0 +1,28 @@
+{
+	acme_dns cloudflare {env.CLOUDFLARE_MARTEN_API_TOKEN}
+}
+
+www.usemarten.tech, usemarten.tech {
+	root * /var/www/marten-web
+	file_server
+
+	handle /install.sh {
+		redir https://raw.githubusercontent.com/tosterabgx/marten/refs/heads/main/install.sh permanent
+	}
+
+	handle /install.ps1 {
+		redir https://raw.githubusercontent.com/tosterabgx/marten/refs/heads/main/install.ps1 permanent
+	}
+	
+	handle /api/* {
+		reverse_proxy :8081
+	}
+}
+
+tunnel.usemarten.tech {
+	redir https://usemarten.tech/ permanent
+}
+
+*.usemarten.tech {
+	reverse_proxy :8080
+}
