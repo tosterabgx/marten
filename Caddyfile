@@ -1,7 +1,3 @@
-{
-	acme_dns cloudflare {env.CLOUDFLARE_MARTEN_API_TOKEN}
-}
-
 www.usemarten.tech, usemarten.tech {
 	root * /var/www/marten-web
 	file_server
@@ -24,5 +20,8 @@ tunnel.usemarten.tech {
 }
 
 *.usemarten.tech {
+	tls {
+		dns cloudflare {env.CLOUDFLARE_MARTEN_API_TOKEN}
+	}
 	reverse_proxy :8080
 }
